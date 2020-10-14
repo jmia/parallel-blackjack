@@ -52,7 +52,7 @@ public class Server extends Thread {
 
             synchronized (lock) {
                 out.writeUTF("Welcome to blackjack! Let's deal some cards.");
-                wait(); // go to sleep until the game kicks off
+                lock.wait(); // go to sleep until the game kicks off
                 out.writeUTF("this is where the outcome of the dealing will go");
 
                 // Run a loop each time the notifyAll awakens all threads
@@ -67,7 +67,9 @@ public class Server extends Thread {
                             out.writeUTF("It is not your turn.");
                             userIsNotified = true;
                         }
-                        wait();
+
+                        // Will this allow other threads to continue automatically?
+                        lock.wait();
                     }
 
                     out.writeUTF("Now it's your turn!");
@@ -86,11 +88,11 @@ public class Server extends Thread {
                     }
 
                     // Turn is over, tell everyone we're ready to move on
-                    notifyAll();
+                    lock.notifyAll();
                 }
                 // And now we wait for everyone else to go
                 while (!isGameOver()) {
-                    wait();
+                    lock.wait();
                 }
 
                 // Game over, print everything and go home
@@ -171,16 +173,19 @@ public class Server extends Thread {
             // Now I need to tell everyone the cards have been dealt and what everyone has
             // But how do I call all the threads from within main? They're all named 't' and scoped to that while loop up there
             // Exception in thread "main" java.lang.IllegalMonitorStateException
-            currentThread().notifyAll();
+            lock.notifyAll();
             // startGame();         // also has the same problem
 
-            // We need to keep digging for the end of the game
-            // I haven't had an exception on this line
-            // but I've also never reached it
-            // so...
+            // Check every couple seconds to see if the game is over
             while (!isGameOver()) {
-                currentThread().wait();
+                Thread.sleep(2000);
             }
+
+            // Tally up the game results
+            System.out.println("This is where we score the stuff");
+
+            // Send messages to users
+            lock.notifyAll();
 
             System.out.println("We made it to the end of the game. By some miracle.");
 
