@@ -105,9 +105,9 @@ public class Server extends Thread {
                 }
 
                 // Let the next player go
-                blackjack.incrementPlayer();
+                blackjack.incrementPlayerTakingTurn();
                 // If it's the last player, set the game over
-                blackjack.checkGameOver();
+                blackjack.checkAndSetGameOver();
                 // Notify another thread
                 blackjack.notifyAll();
             }
@@ -148,19 +148,29 @@ public class Server extends Thread {
     public static void main(String[] args) throws IOException, InterruptedException {
 
         ArrayList<Thread> threads = new ArrayList<>();
+        // This is a hard-coded port to make it easy to run concurrent clients manually
         int port = 61013;
         int connectedUsers = 0;
         int expectedConnections = Integer.parseInt(args[0]);
 
         // Set up the deck
+        // Please note that these decks are stacks and so cards will be dealt
+        // starting from the end of the list
         String contents = readFile("deck.txt", Charset.defaultCharset());
         Deck deck = new Deck(contents);
+
+        // If you'd like to reverse the deck so the cards are dealt
+        // from the start of the list, uncomment this line
+        // deck.reverse();
+
+        // If you'd like to play some real cards man, uncomment this line
         // deck.shuffle();
         blackjack = new Blackjack(deck, expectedConnections);
 
 
         ServerSocket mySocket = new ServerSocket(port);
 
+        // Wait for users to connect to the hardcoded port
         while (connectedUsers < expectedConnections) {
             System.out.println("Waiting for client on port "
                     + mySocket.getLocalPort() + "...");
@@ -195,12 +205,10 @@ public class Server extends Thread {
         blackjack.tallyUp();
 
         // Notify threads that results are ready
-        blackjack.setResultsAreReady();
+        blackjack.setResultsAreReadyAndNotify();
 
         // We finished! Whew.
         System.out.println("Main is happy and going to bed now.");
-
-
     }
 
     /**

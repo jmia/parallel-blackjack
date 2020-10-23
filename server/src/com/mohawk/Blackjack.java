@@ -17,6 +17,12 @@ public class Blackjack {
     private static ArrayList<ArrayList<Card>> playerHands;
     private static String finalResults = "";
 
+    /**
+     * Set up the Blackjack game with a fixed
+     * number of players and a deck of Card objects.
+     * @param deck a stack of cards
+     * @param numPlayers the number of players at the table
+     */
     public Blackjack(Deck deck, int numPlayers) {
         Blackjack.deck = deck;
         Blackjack.numPlayers = numPlayers;
@@ -25,7 +31,7 @@ public class Blackjack {
 
     /**
      * Deals a card to the dealer and each player
-     * (these are stacks, so the test files will be "backwards")
+     * (these are stacks, so the test files will be "backwards").
      */
     public synchronized void deal() {
         dealerHand.add(deck.hit());
@@ -50,7 +56,7 @@ public class Blackjack {
 
     /**
      * Builds a nicely formatted string to send to each player
-     * that shows the state of play after the cards are first dealt
+     * that shows the state of play after the cards are first dealt.
      * @param id the id of the thread requesting the state
      * @return the state of the table
      */
@@ -74,7 +80,7 @@ public class Blackjack {
 
     /**
      * Pops a card off the deck for an individual player
-     * and scores their turn
+     * and scores their turn.
      * @return a string representation of their turn
      */
     public synchronized String hit() {
@@ -108,7 +114,7 @@ public class Blackjack {
     }
 
     /**
-     * Simulates the dealer taking their turn
+     * Simulates the dealer taking their turn.
      */
     public synchronized void playDealer() {
         int dealerValue = getHandValue(dealerHand);
@@ -121,6 +127,11 @@ public class Blackjack {
         }
     }
 
+    /**
+     * Adds up all the scores for the dealer and player
+     * and formats a message containing the final
+     * state of play and the winners.
+     */
     public synchronized void tallyUp() {
         // Here we'll total the scores
         String initialState = "============\nFinal Results\n============\n";
@@ -195,45 +206,76 @@ public class Blackjack {
 
     }
 
+    /**
+     * @return whether all users are connected and cards are dealt
+     */
     public boolean getReadyToPlay() {
         return readyToPlay;
     }
 
-    public void incrementPlayer() {
+    /**
+     * Increment the current player turn.
+     */
+    public void incrementPlayerTakingTurn() {
         playerTakingTurn++;
     }
 
+    /**
+     * @return the ID of the current player
+     */
     public int getPlayerTakingTurn() {
         return playerTakingTurn;
     }
 
+    /**
+     * @return whether the results of the game have been tallied
+     */
     public boolean getResultsAreReady() {
         return resultsAreReady;
     }
 
-    public synchronized void setResultsAreReady() {
+    /**
+     * Set the results as ready and wake up threads on this monitor.
+     */
+    public synchronized void setResultsAreReadyAndNotify() {
         resultsAreReady = true;
         notifyAll();
     }
 
-    public void checkGameOver() {
+    /**
+     * Check if we have taken all player turns
+     * and set the client portion of the game as over if so.
+     */
+    public void checkAndSetGameOver() {
         if (getPlayerTakingTurn() == numPlayers) {
             setGameOver();
         }
     }
 
-    public void setGameOver() {
+    /**
+     * Set the client portion of the game as over.
+     */
+    private void setGameOver() {
         gameOver = true;
     }
 
+    /**
+     * @return whether all players have taken their turns
+     */
     public synchronized boolean getGameOver() {
         return gameOver;
     }
 
-    public void setFinalResults(String value) {
+    /**
+     * @param value a string representation of the final score and outcome
+     */
+    private void setFinalResults(String value) {
         finalResults = value;
     }
 
+    /**
+     * @return a string representation of the final score and outcome
+     */
     public synchronized String getFinalResults() {
         return finalResults;
     }
@@ -241,10 +283,10 @@ public class Blackjack {
     /**
      * Returns a value for the player's score in hand
      *
-     * @param hand The hand of cards to traverse
+     * @param hand the hand of cards to traverse
      * @return the int value score
      */
-    static int getHandValue(ArrayList<Card> hand) {
+    private static int getHandValue(ArrayList<Card> hand) {
         int sum = 0;
         for (int i = 0; i < hand.size(); i++) {
             sum += hand.get(i).getValue();

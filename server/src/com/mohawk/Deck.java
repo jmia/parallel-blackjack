@@ -1,6 +1,5 @@
 package com.mohawk;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Stack;
 import java.util.stream.Collectors;
@@ -20,10 +19,10 @@ public class Deck {
         this.cards = buildDeck(deckContents);
     }
 
-    public Stack<Card> getCards() {
-        return cards;
-    }
-
+    /**
+     * Sets the deck to the new value.
+     * @param cards a stack of cards
+     */
     public void setCards(Stack<Card> cards) {
         this.cards = cards;
     }
@@ -45,6 +44,10 @@ public class Deck {
         return cards;
     }
 
+    /**
+     * Hit the deck!
+     * @return A CARD! A CARD!
+     */
     public Card hit() {
         return cards.pop();
     }
@@ -54,6 +57,15 @@ public class Deck {
      */
     public void shuffle() {
         Collections.shuffle(this.cards);
+        setCards(this.cards);
+    }
+
+    /**
+     * Reverses the deck for
+     * easy testing.
+     */
+    public void reverse() {
+        Collections.reverse(this.cards);
         setCards(this.cards);
     }
 
