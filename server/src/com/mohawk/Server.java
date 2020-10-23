@@ -38,7 +38,6 @@ public class Server extends Thread {
             in = new DataInputStream(server.getInputStream());
             out = new DataOutputStream(server.getOutputStream());
             int id = Integer.parseInt(currentThread().getName());
-            boolean userNotified = false;
 
             // Here we'll give them a welcome message maybe
             System.out.println("We told " + id + " welcome to blackjack! Now we go to sleep until the cards are dealt.");
@@ -52,7 +51,8 @@ public class Server extends Thread {
                     // notifyAll is called on blackjack's monitor
                     System.out.println("Ready to play should have been set by Blackjack. We woke up on " + id);
                 }
-                blackjack.notifyAll();    // is this what i'm missing here? to get the rest out of the block?
+                // Wake up the next thread to get started!
+                blackjack.notifyAll();
             }
 
             // Here we can safely broadcast the current state of play to all sockets
@@ -62,7 +62,9 @@ public class Server extends Thread {
 
             // Then it's time to determine whose turn it is
             synchronized (blackjack) {
+                boolean userNotified = false;
                 while (id != blackjack.getPlayerTakingTurn()) {
+                    System.out.println("We're in the while loop because it's not" + id + "'s turn.");
                     if (!userNotified) {
                         // Print out that it's not their turn "waiting for player turns"
                         System.out.println("Client " + id + " has been told to wait.");
@@ -74,8 +76,13 @@ public class Server extends Thread {
                 }
 
                 System.out.println("We determined player " + id + " should take their turn.");
-                // Do I want to play the hand HERE inside the player turn block...
-                System.out.println("This is where player " + id + " would take their turn inside the sync block.");
+                blackjack.notifyAll();  // idk if this is necessary or not...
+            }
+
+            // Now we're going to take the player's turn!
+            synchronized (blackjack) {
+                System.out.println("This is where player " + id + " would take their turn inside A NEW sync block.");
+                Thread.sleep(2000);
                 System.out.println("We're going to increment players.");
                 blackjack.incrementPlayer();
                 System.out.println("We incremented the player to " + blackjack.getPlayerTakingTurn());
@@ -90,7 +97,6 @@ public class Server extends Thread {
                 blackjack.notifyAll();
             }
 
-            // ...or HERE in a new block?
             System.out.println("We're outside the sync block which means the player has completed their turn.");
 
             synchronized (blackjack) {
