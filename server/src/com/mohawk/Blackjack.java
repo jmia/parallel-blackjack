@@ -48,6 +48,12 @@ public class Blackjack {
         notifyAll();
     }
 
+    /**
+     * Builds a nicely formatted string to send to each player
+     * that shows the state of play after the cards are first dealt
+     * @param id the id of the thread requesting the state
+     * @return the state of the table
+     */
     public synchronized String getInitialState(int id) {
         String initialState = "Cards have been dealt.\n";
         String dealerState = ">> Dealer:\n" + dealerHand.get(0).toString() + " and something else face down.\n";
@@ -66,6 +72,11 @@ public class Blackjack {
         return initialState + dealerState + playerStates + "Waiting for your turn.\n";
     }
 
+    /**
+     * Pops a card off the deck for an individual player
+     * and scores their turn
+     * @return a string representation of their turn
+     */
     public synchronized String hit() {
         int id = getPlayerTakingTurn();
         String playerState = "";
@@ -96,9 +107,14 @@ public class Blackjack {
         return playerState;
     }
 
+    /**
+     * Simulates the dealer taking their turn
+     */
     public synchronized void playDealer() {
         int dealerValue = getHandValue(dealerHand);
 
+        // In standard blackjack rules,
+        // the dealer must hit on <16, stay on 17+
         while (dealerValue < 17) {
             dealerHand.add(deck.hit());
             dealerValue = getHandValue(dealerHand);
@@ -107,20 +123,19 @@ public class Blackjack {
 
     public synchronized void tallyUp() {
         // Here we'll total the scores
-        String initialState = "============\nFinal Results\n============";
+        String initialState = "============\nFinal Results\n============\n";
         String dealerState = ">> Dealer:\n";
         for (int i = 0; i < dealerHand.size(); i++) {
             dealerState += dealerHand.get(i).toString() + "\n";
         }
         int dealerValue = getHandValue(dealerHand);
+
         boolean dealerBust = false;
-        boolean dealerBlackjack = false;
         if (dealerValue > 21) {
             dealerState += "For a total value of " + dealerValue + ". BUST!\n";
             dealerBust = true;
         } else if (dealerValue == 21) {
             dealerState += "For a total value of " + dealerValue + ". BLACKJACK!\n";
-            dealerBlackjack = true;
         } else {
             dealerState += "For a total value of " + dealerValue + ".\n";
         }
@@ -128,13 +143,55 @@ public class Blackjack {
         String playerStates = "";
 
         for (int i = 0; i < playerHands.size(); i++) {
-            playerStates += ">> Player " + i + ": ";
-            playerStates += "\n";
+            playerStates += ">> Player " + i + ":\n";
             for (int j = 0; j < playerHands.get(i).size(); j++) {
                 playerStates += playerHands.get(i).get(j).toString() + "\n";
             }
-            playerStates += "For a total value of " + getHandValue(playerHands.get(i)) + ".\n";
+            int playerValue = getHandValue(playerHands.get(i));
+
+            boolean playerBust = false;
+            if (playerValue > 21) {
+                playerStates += "For a total value of " + playerValue + ". BUST!\n";
+                playerBust = true;
+            } else if (playerValue == 21) {
+                playerStates += "For a total value of " + playerValue + ". BLACKJACK!\n";
+            } else {
+                playerStates += "For a total value of " + playerValue + ".\n";
+            }
+
+            // Win conditions
+
+            // Player bust out and dealer didn't
+            if (playerBust && !dealerBust) {
+                playerStates += "Dealer won against Player " + i + " this round.\n";
+            }
+            // Dealer bust out and player didn't
+            else if (!playerBust && dealerBust) {
+                playerStates += "Player " + i + " beat the dealer!\n";
+            }
+            // Nobody busted out, compare actual scores
+            else if (!playerBust && !dealerBust) {
+                if (playerValue > dealerValue) {
+                    playerStates += "Player " + i + " beat the dealer!\n";
+                }
+                else if (playerValue == dealerValue) {
+                    playerStates += "Round against Player " + i + " was a tie.\n";
+                }
+                else {
+                    playerStates += "Dealer won against Player " + i + " this round.\n";
+                }
+            }
+            // Everybody busted
+            else if (playerBust && dealerBust) {
+                playerStates += "Nobody won the round for Player " + i + ".\n";
+            }
         }
+
+        String results = initialState + dealerState + playerStates;
+
+        results += "GAME OVER!";
+
+        setFinalResults(results);
 
     }
 
@@ -175,6 +232,10 @@ public class Blackjack {
 
     public void setFinalResults(String value) {
         finalResults = value;
+    }
+
+    public synchronized String getFinalResults() {
+        return finalResults;
     }
 
     /**

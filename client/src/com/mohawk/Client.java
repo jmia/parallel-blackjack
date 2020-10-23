@@ -9,6 +9,7 @@ import java.util.Scanner;
  */
 public class Client {
 
+    // Client messaging/waiting state
     private static boolean wasGreeted = false;
     private static boolean receivedInitialGameState = false;
     private static boolean isTakingTurn = false;
@@ -37,6 +38,7 @@ public class Client {
 
             // Waiting for a greeting on connection
             while (!wasGreeted) {
+                // Arbitrary sleep to keep the app from constantly pinging for responses
                 Thread.sleep(500);
                 if (in.available() > 0) {
                     // The server should send a message like, "Welcome to blackjack! Stand by for all players."
@@ -47,6 +49,7 @@ public class Client {
 
             // Waiting for the hand to be dealt
             while (!receivedInitialGameState) {
+                // Arbitrary sleep to keep the app from constantly pinging for responses
                 Thread.sleep(500);
                 if (in.available() > 0) {
                     // The server should send a message like, "Here are all the cards. Waiting for your turn."
@@ -57,6 +60,7 @@ public class Client {
 
             // Waiting for the server to tell us it's our turn
             while (!isTakingTurn) {
+                // Arbitrary sleep to keep the app from constantly pinging for responses
                 Thread.sleep(500);
                 if (in.available() > 0) {
                     // The server should send a message like, "It's your turn now."
@@ -65,15 +69,11 @@ public class Client {
                 }
             }
 
-            // The player will do some I/O here.
+            // The player will do some I/O here
             while (!completedRound && !isBust) {
 
-                // Give the server a few ms to send something
+                // Arbitrary sleep to keep the app from constantly pinging for responses
                 Thread.sleep(300);
-
-                // check for a message from the server, might be the start of a round like
-                // "What would you like to do?"
-                // or a mid-round response like "BUST!" or "Your score is 17. What would you like to do?"
 
                 // If there is a response
                 if (in.available() > 0) {
@@ -83,6 +83,7 @@ public class Client {
                     if (response.contains("BLACKJACK!")) {
                         System.out.println("You hit blackjack! Time to wait for the round to end.");
                         completedRound = true;
+                        // Tell the server to end the user's turn
                         out.writeUTF("blackjack");
                         continue;
                     }
@@ -90,7 +91,8 @@ public class Client {
                     if (response.contains("BUST!")) {
                         System.out.println("You busted out. Time to wait for the round to end.");
                         isBust = true;
-                        completedRound = true;  // TODO: Might be able to take this out?
+                        completedRound = true;
+                        // Tell the server to end the user's turn
                         out.writeUTF("bust");
                         continue;
                     }
@@ -98,6 +100,8 @@ public class Client {
                 } else {
                     continue;
                 }
+
+                // The player can type something now
                 System.out.println("Any key to hit, type s to stay, type exit to quit.");
                 typing = keyboard.nextLine();
                 switch(typing.toLowerCase()) {
@@ -118,6 +122,7 @@ public class Client {
             }
 
             while (!shouldEndConnection) {
+                // Arbitrary sleep to keep the app from constantly pinging for responses
                 Thread.sleep(500);
                 if (in.available() > 0) {
                     // The server should send a message like, "Here are all the results. Thanks for playing."

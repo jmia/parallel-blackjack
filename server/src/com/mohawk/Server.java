@@ -55,6 +55,7 @@ public class Server extends Thread {
                 }
             }
 
+            // Cards have been dealt
             // Print the state of play to each player
             out.writeUTF(blackjack.getInitialState(id));
 
@@ -73,22 +74,27 @@ public class Server extends Thread {
                 out.writeUTF("What would you like to do?");
 
                 while (!playerCompletedRound) {
+                    // Arbitrary sleep to keep the thread from constantly pinging for responses
                     Thread.sleep(300);
-                    // If user input comes in
+                    // When user input comes in
                     if (in.available() > 0) {
                         String clientInput = in.readUTF();
                         String response = "";
+                        // Determine how to respond to the user
                         switch (clientInput) {
+                            // If they busted, hit blackjack, or chose to stay, the turn is over
                             case "blackjack":
                             case "bust":
                             case "s":
                                 System.out.println("Player " + id + " completed their turn.");
                                 playerCompletedRound = true;
                                 break;
+                            // If they chose to exit
                             case "exit":
                                 System.out.println("Player " + id + " bailed.");
                                 playerCompletedRound = true;
                                 break;
+                            // If they typed any other response
                             default:
                                 System.out.println("Player " + id + " hit.");
                                 response = blackjack.hit();
@@ -98,24 +104,24 @@ public class Server extends Thread {
                     }
                 }
 
+                // Let the next player go
                 blackjack.incrementPlayer();
-
+                // If it's the last player, set the game over
                 blackjack.checkGameOver();
-
+                // Notify another thread
                 blackjack.notifyAll();
             }
 
+            // Round is over, we're not exiting until results are tallied
             System.out.println("Round is over for " + id);
-
-            // Round is over, we're not exiting until it's safe
             synchronized (blackjack) {
                 while (!blackjack.getResultsAreReady()) {
                     blackjack.wait();
                 }
             }
 
-            System.out.println("We'll print the final results for " + id);
-            out.writeUTF("THE GAME IS OVER! There will be some results here.");
+            System.out.println("Printing final results for " + id);
+            out.writeUTF(blackjack.getFinalResults());
 
             out.close();
             in.close();
@@ -176,20 +182,25 @@ public class Server extends Thread {
         // This will call notify all when it completes
         blackjack.deal();
 
-        // Threads are playing, check periodically for game over
+        // Threads are playing, check periodically for game over but not too often
         while (!blackjack.getGameOver()) {
             System.out.println("Main tried to find out if game was over.");
             Thread.sleep(2000);
         }
 
+        // Players have played their rounds, time for the dealer to go
         blackjack.playDealer();
 
+        // Tally up scores
         blackjack.tallyUp();
 
-        Thread.sleep(1000);
+        // Notify threads that results are ready
         blackjack.setResultsAreReady();
 
+        // We finished! Whew.
         System.out.println("Main is happy and going to bed now.");
+
+
     }
 
     /**
