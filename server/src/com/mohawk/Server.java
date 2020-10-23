@@ -34,12 +34,13 @@ public class Server extends Thread {
         try {
             System.out.println("Just connected to " + server.getRemoteSocketAddress());
 
-            // block-level variables
+            // Block-level variables
             in = new DataInputStream(server.getInputStream());
             out = new DataOutputStream(server.getOutputStream());
             int id = Integer.parseInt(currentThread().getName());
 
             // Here we'll give them a welcome message maybe
+            out.writeUTF("Welcome to blackjack! Your ID is " + id + ". Please wait for the game to begin.");
             System.out.println("We told " + id + " welcome to blackjack! Now we go to sleep until the cards are dealt.");
 
             // We're in the pre-game state
