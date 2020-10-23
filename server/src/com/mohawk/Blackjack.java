@@ -9,6 +9,7 @@ public class Blackjack {
     private static int numPlayers = 0;
     private static boolean readyToPlay = false;
     private static boolean gameOver = false;
+    private static boolean resultsAreReady = false;
 
     // Internal game data
     private static Deck deck;
@@ -45,23 +46,46 @@ public class Blackjack {
         notifyAll();
     }
 
-    public synchronized boolean getReadyToPlay() {
-        return readyToPlay;
+    public synchronized void play(int id) throws InterruptedException {
+        while (id != getPlayerTakingTurn()) {
+            wait();
+        }
+
+        System.out.println("We told player " + id + " it was their turn.");
+        Thread.sleep(3000);
+        incrementPlayer();
+
+        if (getPlayerTakingTurn() == numPlayers) {
+            setGameOver();
+        }
+
+        notifyAll();
     }
 
-    public synchronized void incrementPlayer() {
+    public boolean getReadyToPlay() {
+        return readyToPlay;
+    }       // should this be sync?
+
+    public void incrementPlayer() {
         playerTakingTurn++;
     }
 
-    public synchronized int getPlayerTakingTurn() {
+    public int getPlayerTakingTurn() {
         return playerTakingTurn;
+    }
+
+    public boolean getResultsAreReady() { return resultsAreReady; }     // should this be sync?
+
+    public synchronized void setResultsAreReady() {
+        resultsAreReady = true;
+        notifyAll();
     }
 
     public synchronized void setGameOver() {
         gameOver = true;
     }
 
-    public synchronized boolean isGameOver() {
+    public synchronized boolean getGameOver() {
         return gameOver;
     }
 
