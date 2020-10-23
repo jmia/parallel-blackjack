@@ -2,7 +2,6 @@ package com.mohawk;
 
 import java.io.*;
 import java.net.Socket;
-import java.sql.SQLOutput;
 import java.util.Scanner;
 
 /**
@@ -46,8 +45,6 @@ public class Client {
                 }
             }
 
-            System.out.println("wasgreeted came back true");
-
             // Waiting for the hand to be dealt
             while (!receivedInitialGameState) {
                 Thread.sleep(500);
@@ -57,8 +54,6 @@ public class Client {
                     receivedInitialGameState = true;
                 }
             }
-
-            System.out.println("receivedInitialGameState came back true");
 
             // Waiting for the server to tell us it's our turn
             while (!isTakingTurn) {
@@ -70,8 +65,6 @@ public class Client {
                 }
             }
 
-            System.out.println("isTakingTurn came back true");
-
             // The player will do some I/O here.
             while (!completedRound && !isBust) {
 
@@ -82,26 +75,33 @@ public class Client {
                 // "What would you like to do?"
                 // or a mid-round response like "BUST!" or "Your score is 17. What would you like to do?"
 
-
                 // If there is a response
                 if (in.available() > 0) {
                     String response = in.readUTF();
                     System.out.println(response);
+                    // If the response is BLACKJACK, the round is over
+                    if (response.contains("BLACKJACK!")) {
+                        System.out.println("You hit blackjack! Time to wait for the round to end.");
+                        completedRound = true;
+                        out.writeUTF("blackjack");
+                        continue;
+                    }
                     // If the response is BUST, the round is over
-                    if (response.equals("BUST!")) {
+                    if (response.contains("BUST!")) {
                         System.out.println("You busted out. Time to wait for the round to end.");
                         isBust = true;
-                        completedRound = true;
+                        completedRound = true;  // TODO: Might be able to take this out?
+                        out.writeUTF("bust");
                         continue;
                     }
                 // If there is no response
                 } else {
                     continue;
                 }
-                System.out.println("Any key to hit, n to stay, exit to quit.");
+                System.out.println("Any key to hit, type s to stay, type exit to quit.");
                 typing = keyboard.nextLine();
                 switch(typing.toLowerCase()) {
-                    case "n":
+                    case "s":
                         System.out.println("You chose to stay. Time to wait for the round to end.");
                         completedRound = true;
                         break;

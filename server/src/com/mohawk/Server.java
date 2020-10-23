@@ -28,37 +28,40 @@ public class Server extends Thread {
         server = theSocket;
     }
 
+    /**
+     * Progresses a 'client' thread through the states of playing
+     * a group game of blackjack.
+     */
     public void run() {
         String line = "start";
 
         try {
             System.out.println("Just connected to " + server.getRemoteSocketAddress());
 
-            // Block-level variables
+            // Method-level variables
             in = new DataInputStream(server.getInputStream());
             out = new DataOutputStream(server.getOutputStream());
             int id = Integer.parseInt(currentThread().getName());
 
-            // Here we'll give them a welcome message maybe
+            // Here we'll give them a welcome message
             out.writeUTF("Welcome to blackjack! Your ID is " + id + ". Please wait for all players to connect.");
             System.out.println("We greeted " + id + ". Now we go to sleep until the cards are dealt.");
 
             // We're in the pre-game state
             synchronized (blackjack) {
-                while (!blackjack.getReadyToPlay()) {       // does this method need to be sync if the block is sync?
+                while (!blackjack.getReadyToPlay()) {
                     // The cards haven't been dealt at this point
                     blackjack.wait();
-                    // the deal method in main called notify all
                 }
             }
 
-            // I'm 100% sure of my state of play by this line.
-            System.out.println("Printing the state of play for " + id + ".");
-            out.writeUTF(blackjack.getInitialState());
+            // Print the state of play to each player
+            out.writeUTF(blackjack.getInitialState(id));
 
+            // Play a round for each thread
             synchronized (blackjack) {
-                boolean playerCompletedRound = false;       // i don't know if this will set locally or not
-                boolean playerBust = false;
+                // Round state
+                boolean playerCompletedRound = false;
                 while (id != blackjack.getPlayerTakingTurn()) {
                     blackjack.wait();
                 }
@@ -74,9 +77,12 @@ public class Server extends Thread {
                     // If user input comes in
                     if (in.available() > 0) {
                         String clientInput = in.readUTF();
+                        String response = "";
                         switch (clientInput) {
-                            case "n":
-                                System.out.println("Player " + id + " stayed.");
+                            case "blackjack":
+                            case "bust":
+                            case "s":
+                                System.out.println("Player " + id + " completed their turn.");
                                 playerCompletedRound = true;
                                 break;
                             case "exit":
@@ -85,9 +91,8 @@ public class Server extends Thread {
                                 break;
                             default:
                                 System.out.println("Player " + id + " hit.");
-                                // TODO: Hit me! (just testing with bust for now)
-                                out.writeUTF("BUST!");
-                                playerCompletedRound = true;
+                                response = blackjack.hit();
+                                out.writeUTF(response);
                                 break;
                         }
                     }
@@ -149,24 +154,21 @@ public class Server extends Thread {
 
 
         ServerSocket mySocket = new ServerSocket(port);
-        // Need a way to close the server without just killing it.
+
         while (connectedUsers < expectedConnections) {
             System.out.println("Waiting for client on port "
                     + mySocket.getLocalPort() + "...");
-            Socket server = mySocket.accept(); //blocking
+            Socket server = mySocket.accept(); // blocking
             try {
                 Thread t = new Server(server, connectedUsers);
                 threads.add(t);
                 t.start();
-                connectedUsers++;       // do I need to manage access to this?
+                connectedUsers++;
 
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-
-        System.out.println("All users are here, let's GO.");
-        Thread.sleep(1000);
 
         // We're in the pre-game state, threads are waiting
 
@@ -174,12 +176,15 @@ public class Server extends Thread {
         // This will call notify all when it completes
         blackjack.deal();
 
+        // Threads are playing, check periodically for game over
         while (!blackjack.getGameOver()) {
             System.out.println("Main tried to find out if game was over.");
             Thread.sleep(2000);
         }
 
-        System.out.println("We made it to the end of the game on MAIN. Tally her up.");
+        blackjack.playDealer();
+
+        blackjack.tallyUp();
 
         Thread.sleep(1000);
         blackjack.setResultsAreReady();
