@@ -24,6 +24,7 @@ public class Blackjack {
 
     /**
      * Deals a card to the dealer and each player
+     * (these are stacks, so the test files will be "backwards")
      */
     public synchronized void deal() {
         dealerHand.add(deck.hit());
@@ -46,20 +47,22 @@ public class Blackjack {
         notifyAll();
     }
 
-    public synchronized void play(int id) throws InterruptedException {
-        while (id != getPlayerTakingTurn()) {
-            wait();
-        }
-
-        System.out.println("We told player " + id + " it was their turn.");
+    public synchronized void play() throws InterruptedException {
         Thread.sleep(3000);
-        incrementPlayer();
+    }
 
-        if (getPlayerTakingTurn() == numPlayers) {
-            setGameOver();
+    public synchronized String getInitialState() {
+        String initialState = "Cards have been dealt.\n";
+        String dealerState = "Dealer:\n" + dealerHand.get(0).toString() + " and something else face down.\n";
+        String playerStates = "";
+        for (int i = 0; i < playerHands.size(); i++) {
+            playerStates += ">> Player " + i + ":\n";
+            for (int j = 0; j < playerHands.get(i).size(); j++) {
+                playerStates+= playerHands.get(i).get(j).toString() + "\n";
+            }
+            playerStates += "For a total value of " + getHandValue(playerHands.get(i)) + ".\n";
         }
-
-        notifyAll();
+        return initialState + dealerState + playerStates + "Waiting for your turn.\n";
     }
 
     public boolean getReadyToPlay() {
@@ -81,16 +84,18 @@ public class Blackjack {
         notifyAll();
     }
 
-    public synchronized void setGameOver() {
+    public void checkGameOver() {
+        if (getPlayerTakingTurn() == numPlayers) {
+            setGameOver();
+        }
+    }
+
+    public void setGameOver() {
         gameOver = true;
     }
 
     public synchronized boolean getGameOver() {
         return gameOver;
-    }
-
-    public int getNumPlayers() {    // is only ever written to once
-        return numPlayers;
     }
 
     /**

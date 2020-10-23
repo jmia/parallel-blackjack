@@ -40,8 +40,8 @@ public class Server extends Thread {
             int id = Integer.parseInt(currentThread().getName());
 
             // Here we'll give them a welcome message maybe
-            out.writeUTF("Welcome to blackjack! Your ID is " + id + ". Please wait for the game to begin.");
-            System.out.println("We told " + id + " welcome to blackjack! Now we go to sleep until the cards are dealt.");
+            out.writeUTF("Welcome to blackjack! Your ID is " + id + ". Please wait for all players to connect.");
+            System.out.println("We greeted " + id + ". Now we go to sleep until the cards are dealt.");
 
             // We're in the pre-game state
             synchronized (blackjack) {
@@ -53,13 +53,52 @@ public class Server extends Thread {
             }
 
             // I'm 100% sure of my state of play by this line.
-            System.out.println("Here's where we should print the state of play for " + id + " (I expect to see this three times)");
+            System.out.println("Printing the state of play for " + id + ".");
+            out.writeUTF(blackjack.getInitialState());
 
-            if (id != blackjack.getPlayerTakingTurn()) {
-                System.out.println("It's not " + id + "'s turn.");
+            synchronized (blackjack) {
+                boolean playerCompletedRound = false;       // i don't know if this will set locally or not
+                boolean playerBust = false;
+                while (id != blackjack.getPlayerTakingTurn()) {
+                    blackjack.wait();
+                }
+
+                out.writeUTF("It's your turn now.");
+                System.out.println("We told player " + id + " it was their turn.");
+
+                // Where the magic happens for each player
+                out.writeUTF("What would you like to do?");
+
+                while (!playerCompletedRound) {
+                    Thread.sleep(300);
+                    // If user input comes in
+                    if (in.available() > 0) {
+                        String clientInput = in.readUTF();
+                        switch (clientInput) {
+                            case "n":
+                                System.out.println("Player " + id + " stayed.");
+                                playerCompletedRound = true;
+                                break;
+                            case "exit":
+                                System.out.println("Player " + id + " bailed.");
+                                playerCompletedRound = true;
+                                break;
+                            default:
+                                System.out.println("Player " + id + " hit.");
+                                // TODO: Hit me! (just testing with bust for now)
+                                out.writeUTF("BUST!");
+                                playerCompletedRound = true;
+                                break;
+                        }
+                    }
+                }
+
+                blackjack.incrementPlayer();
+
+                blackjack.checkGameOver();
+
+                blackjack.notifyAll();
             }
-
-            blackjack.play(id); // this will need to be broken up to support i/o
 
             System.out.println("Round is over for " + id);
 
@@ -70,9 +109,8 @@ public class Server extends Thread {
                 }
             }
 
-            System.out.println("We'll print the final results here for " + id);
-
-            System.out.println("Goodbye!");
+            System.out.println("We'll print the final results for " + id);
+            out.writeUTF("THE GAME IS OVER! There will be some results here.");
 
             out.close();
             in.close();
@@ -146,7 +184,7 @@ public class Server extends Thread {
         Thread.sleep(1000);
         blackjack.setResultsAreReady();
 
-        System.out.println("We're done, amazing.");
+        System.out.println("Main is happy and going to bed now.");
     }
 
     /**

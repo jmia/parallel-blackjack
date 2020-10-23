@@ -46,6 +46,8 @@ public class Client {
                 }
             }
 
+            System.out.println("wasgreeted came back true");
+
             // Waiting for the hand to be dealt
             while (!receivedInitialGameState) {
                 Thread.sleep(500);
@@ -56,6 +58,8 @@ public class Client {
                 }
             }
 
+            System.out.println("receivedInitialGameState came back true");
+
             // Waiting for the server to tell us it's our turn
             while (!isTakingTurn) {
                 Thread.sleep(500);
@@ -65,6 +69,8 @@ public class Client {
                     isTakingTurn = true;
                 }
             }
+
+            System.out.println("isTakingTurn came back true");
 
             // The player will do some I/O here.
             while (!completedRound && !isBust) {
@@ -106,6 +112,7 @@ public class Client {
                         break;
                     default:
                         System.out.println("You chose to hit. Waiting for more cards.");
+                        break;
                 }
                 out.writeUTF(typing);
             }
