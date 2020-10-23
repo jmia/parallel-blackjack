@@ -11,6 +11,11 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
+// I, blah blah blah Jen, student number blah 000750279, certify that blah
+// blah no work has been made available for others and it's all mine thank you
+// and honestly I feel a little bit like it came to me in a dream so
+// partial thanks to that episode of TNG I was watching as I fell asleep - j.m.i-a.
+
 /**
  * Represents a server that connects clients to play Blackjack.
  */
