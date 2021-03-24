@@ -4,4 +4,5 @@ This teeny little headache was the first assignment for 6th semester [Parallel P
 
 ### Program Arguments
 client: `[number of players]` (e.g. 2)
-server: `[ip address] [port number]` (127.0.0.1 61013)
+
+server: `[ip address] [port number]` (e.g. 127.0.0.1 61013)
